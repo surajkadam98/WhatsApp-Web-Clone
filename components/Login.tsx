@@ -75,10 +75,10 @@ const Login = () => {
             {/* QR */}
             <div className="mx-auto md:m-0 md:-mt-5 flex flex-col items-center justify-center">
               <Image
-                src={"/linkedIn-Id.png"}
+                src={"/vercel.svg"}
                 width={300}
                 height={300}
-                alt="https://www.linkedin.com/in/suraj-kadam-965911227/"
+                alt="temp"
               />
               <button
                 onClick={handleSignin}
