@@ -1,4 +1,4 @@
-//update firebase sdk config
+// update firebase sdk config
 export const firebaseConfig = {
   apiKey: "...",
   authDomain: "...",

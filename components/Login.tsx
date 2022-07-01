@@ -1,12 +1,21 @@
 import { signInWithPopup } from "firebase/auth";
 import Image from "next/image";
 import Router from "next/router";
-import React from "react";
+import React, { useState } from "react";
 import db, { auth, provider } from "../utils/firebase";
 import { GoogleIcon } from "../utils/icons";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import Alert, { IAlert } from "./Alert";
+
+const defaultAlert: IAlert = {
+  type: "error",
+  title: "",
+  subTitle: "",
+};
 
 const Login = () => {
+  const [alert, setAlert] = useState({ ...defaultAlert });
+
   const handleSignin = () => {
     signInWithPopup(auth, provider)
       .then((res) => {
@@ -22,14 +31,28 @@ const Login = () => {
           const usersRef = doc(db, "users", user.uid);
           localStorage.setItem("WAW-Clone-userEmail", data?.email || "");
           setDoc(usersRef, data, { merge: true });
+          setAlert({ ...defaultAlert });
         }
         Router.push({ pathname: "/chat" });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        setAlert({
+          ...alert,
+          title: err.message,
+        });
+        localStorage.removeItem("WAW-Clone-userEmail");
+      });
   };
 
   return (
     <div className="h-screen w-screen relative">
+      {alert.title && (
+        <Alert
+          title={alert.title}
+          type={alert.type}
+          onClose={() => setAlert({ ...defaultAlert })}
+        />
+      )}
       <div className="flex flex-col h-full w-full relative">
         <div className="w-full h-56 bg-login-green">
           {/* logo */}
@@ -81,8 +104,14 @@ const Login = () => {
                 alt="temp"
               />
               <button
-                onClick={handleSignin}
-                className="py-2 w-3/4 h-14  flex justify-center items-center rounded-full font-bold border-2 border-gray-200 mb-3"
+                onClick={() => {
+                  if (alert.title) return;
+                  handleSignin();
+                }}
+                disabled={alert.title ? true : false}
+                className={`py-2 w-3/4 h-14  flex justify-center items-center rounded-full font-bold border-2 border-gray-200 mb-3
+                  ${alert.title && "opacity-60 cursor-not-allowed"}
+                `}
               >
                 <GoogleIcon classes="h-6 w-6" />
                 <p className="ml-2 text-gray-500">Continue with Google</p>

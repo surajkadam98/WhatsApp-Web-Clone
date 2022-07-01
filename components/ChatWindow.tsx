@@ -22,6 +22,7 @@ import {
   limit,
   onSnapshot,
 } from "firebase/firestore";
+import Alert from "./Alert";
 
 const ChatWindow = () => {
   const router = useRouter();
@@ -29,6 +30,7 @@ const ChatWindow = () => {
   const [messages, setMessages] = useState<any>([]);
   const [message, setMessage] = useState("");
   const [currentContact, setCurrentContact] = useState<any>({});
+  const [error, setError] = useState("");
 
   const { id } = router.query;
   const userEmail =
@@ -51,7 +53,9 @@ const ChatWindow = () => {
         userRef,
         where("email", "==", `${contactEmail[0]}`)
       );
-      const contactInfo: any = await getDocs(userChats);
+      const contactInfo: any = await getDocs(userChats).catch((err) =>
+        setError(err.message)
+      );
       contactInfo.forEach((contact: any) => {
         const contactData = contact.data();
         setCurrentContact({
@@ -72,11 +76,20 @@ const ChatWindow = () => {
     const messageSnapShot = await onSnapshot(userChats, (querySnapshot) => {
       const chats: any = [];
       querySnapshot.forEach((chat) => {
-        const chatData = chat.data();
+        const chatData = chat?.data();
+        const localTimeStamp =
+          new Date(chatData?.timestamp?.seconds * 1000)?.toLocaleTimeString(
+            "en-US",
+            {
+              hour: "numeric",
+              minute: "numeric",
+              hour12: true,
+            }
+          ) || "";
         chats.push({
           message: chatData.message || "",
           sender: chatData.sender || "",
-          timestamp: chatData?.timestamp || "",
+          timestamp: `${localTimeStamp}`,
         });
       });
       setMessages([]);
@@ -99,10 +112,15 @@ const ChatWindow = () => {
       timestamp: serverTimestamp(),
     })
       .then((res) => setMessage(""))
-      .catch((err) => console.log(err));
+      .catch((err) => setError(err.message));
   };
   return (
     <div className="h-full flex-[30%] border-r border-gray-700 flex flex-col text-[#e9edef] bg-[#0b141a]">
+      {/* error message */}
+      {error && (
+        <Alert title={error} type="error" onClose={() => setError("")} />
+      )}
+
       {/* nav */}
       <div className="bg-[#202c33] h-16 flex justify-between items-center px-5 py-3">
         <div className="flex justify-between items-center">
@@ -145,11 +163,7 @@ const ChatWindow = () => {
                       : "flex items-end"
                   }`}
                 >
-                  <p>
-                    {new Date(
-                      chat?.timestamp?.seconds * 1000
-                    )?.toLocaleTimeString() || ""}
-                  </p>
+                  <p>{chat?.timestamp}</p>
                 </div>
               </div>
             </div>
