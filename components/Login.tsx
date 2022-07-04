@@ -27,9 +27,16 @@ const Login = () => {
             displayName: user.displayName,
             avatar: user.photoURL,
             lastSeen: serverTimestamp(),
+            activeStatus: true,
           };
           const usersRef = doc(db, "users", user.uid);
-          localStorage.setItem("WAW-Clone-userEmail", data?.email || "");
+          const userData = {
+            _id: data?._id || "",
+            email: data?.email || "",
+            avatar: data?.avatar || "",
+            displayName: data?.displayName,
+          };
+          localStorage.setItem("WAW-Clone-userData", JSON.stringify(userData));
           setDoc(usersRef, data, { merge: true });
           setAlert({ ...defaultAlert });
         }
@@ -40,12 +47,12 @@ const Login = () => {
           ...alert,
           title: err.message,
         });
-        localStorage.removeItem("WAW-Clone-userEmail");
+        localStorage.removeItem("WAW-Clone-userData");
       });
   };
 
   return (
-    <div className="h-screen w-screen relative">
+    <div className="h-screen w-screen relative overflow-hidden">
       {alert.title && (
         <Alert
           title={alert.title}
@@ -79,37 +86,33 @@ const Login = () => {
         </div>
         <div className="flex-grow bg-app-dark"></div>
         {/* modal */}
-        <div className=" absolute -bottom-96 sm:bottom-2 md:-bottom-16 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50  w-full">
+        <div className=" absolute top-[25rem]  m:-bottom-16 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50  w-full">
           <div className="bg-white max-w-3xl lg:max-w-4xl mx-9 md:mx-auto  p-10 md:p-16 rounded-sm text-app-text-gray flex flex-col sm:flex-row md:justify-between ">
-            <div>
+            <div className="flex flex-col items-center md:items-start ">
               <p className="text-2xl lg:text-3xl font-light mb-5 lg:mb-10">
                 WhatsApp Web Clone:
               </p>
               <ul className="ml-1 space-y-4 mb-7 text-md lg:text-lg">
-                <li>1. Login using gmail account</li>
-                <li>2. Create group and chat</li>
-                <li>3. Delete group and chat</li>
-                <li>4. Logout</li>
+                <li>1. Login/Logout using gmail account</li>
+                <li>2. Add contact using their gmail id</li>
+                <li>3. Real time active status and chat</li>
               </ul>
-              <a className="text-md lg:text-lg text-teal-700">
+              <a className="text-md lg:text-lg text-teal-700 cursor-not-allowed">
                 Need help to get started?
               </a>
             </div>
-            {/* QR */}
-            <div className="mx-auto md:m-0 md:-mt-5 flex flex-col items-center justify-center">
-              <Image
-                src={"/vercel.svg"}
-                width={300}
-                height={300}
-                alt="temp"
-              />
+
+            <div className=" md:mx-auto md:m-0 md:-mt-5 flex flex-col items-center justify-center">
+              <div className="hidden sm:block rounded-md shadow-md mb-5">
+                <Image src={"/tech.png"} width={300} height={300} alt="temp" />
+              </div>
               <button
                 onClick={() => {
                   if (alert.title) return;
                   handleSignin();
                 }}
                 disabled={alert.title ? true : false}
-                className={`py-2 w-3/4 h-14  flex justify-center items-center rounded-full font-bold border-2 border-gray-200 mb-3
+                className={`mt-5 md:mt-0 py-2 w-full md:w-3/4 h-14  flex justify-center items-center rounded-full font-bold border-2 border-gray-200 mb-3
                   ${alert.title && "opacity-60 cursor-not-allowed"}
                 `}
               >

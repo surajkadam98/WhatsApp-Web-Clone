@@ -2,13 +2,11 @@ import React from "react";
 import Login from "../../components/Login";
 import Sidebar from "../../components/Sidebar";
 import styles from "../../styles/Home.module.css";
+import { getLoggedUserData } from "../../utils/helper";
 
 const index = () => {
-  const userEmail =
-    typeof window !== "undefined" &&
-    localStorage.getItem("WAW-Clone-userEmail");
-
-  if (!userEmail) return <Login />;
+  let userData = getLoggedUserData();
+  if (!userData?.email) return <Login />;
 
   return (
     <div className={`bg-[#0a1015]`}>
@@ -16,8 +14,10 @@ const index = () => {
         className={`${styles.main} max-w-[90rem] mx-auto  2xl:py-5 2xl:px-10`}
       >
         <div className="h-full w-full  flex">
-          <Sidebar />
-          <div className="h-full flex-[70%] bg-[#212e35] flex justify-center items-center">
+          <div className="w-full md:flex-[30%]">
+            <Sidebar />
+          </div>
+          <div className="h-full hidden md:flex  md:flex-[70%] bg-[#212e35] justify-center items-center">
             <div className="w-full flex flex-col items-center space-y-10">
               <svg
                 width="360"

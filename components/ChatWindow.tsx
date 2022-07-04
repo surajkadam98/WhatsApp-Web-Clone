@@ -2,6 +2,7 @@
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import {
+  BackIcon,
   ClipMenuIcon,
   EmojiMenuIcon,
   MenuDotIcon,
@@ -14,15 +15,16 @@ import {
   serverTimestamp,
   query,
   addDoc,
-  getDocs,
   collection,
   where,
   getDoc,
   orderBy,
   limit,
   onSnapshot,
+  setDoc,
 } from "firebase/firestore";
 import Alert from "./Alert";
+import { getContactEmail, getLoggedUserData, timeSince } from "../utils/helper";
 
 const ChatWindow = () => {
   const router = useRouter();
@@ -32,36 +34,45 @@ const ChatWindow = () => {
   const [currentContact, setCurrentContact] = useState<any>({});
   const [error, setError] = useState("");
 
+  const element = document.getElementById("message-container");
+
   const { id } = router.query;
-  const userEmail =
-    typeof window !== "undefined" &&
-    localStorage.getItem("WAW-Clone-userEmail");
+  let userData = getLoggedUserData();
 
   const getUserData = async () => {
     if (!id) return;
-
+    setCurrentContact({});
     //get current contact data
     const chatRef = doc(db, "chats", `${id}`);
     const chatData: any = (await getDoc(chatRef)).data();
 
     if (chatData?.users) {
-      const contactEmail = chatData.users.filter(
-        (email: string) => userEmail !== email
-      );
+      const contactData = getContactEmail(chatData, userData?.email) || "";
+
       const userRef = collection(db, "users");
       const userChats = query(
         userRef,
-        where("email", "==", `${contactEmail[0]}`)
+        where("email", "==", `${contactData?.email}`)
       );
-      const contactInfo: any = await getDocs(userChats).catch((err) =>
-        setError(err.message)
-      );
-      contactInfo.forEach((contact: any) => {
-        const contactData = contact.data();
-        setCurrentContact({
-          name: contactData?.email?.split("@")[0],
-          lastSeen: contactData?.lastSeen || "",
-          avatar: contactData?.avatar || "",
+      //  current contact listner
+      const contactSnapShot = await onSnapshot(userChats, (querySnapshot) => {
+        querySnapshot.forEach((contactDetails) => {
+          const contactData = contactDetails.data();
+          if (!contactData) return;
+          //check user active status
+          let timeStamp =
+            contactData?.activeStatus === true
+              ? "Active now"
+              : `Active ${timeSince(
+                  contactData?.lastSeen?.seconds * 1000
+                )} ago` || "";
+          setCurrentContact({
+            name: contactData?.displayName || contactData?.email?.split("@")[0],
+            lastSeen: timeStamp || "",
+            avatar:
+              contactData?.avatar ||
+              "https://ui-avatars.com/api/&background=4d148c&color=fff&name=S",
+          });
         });
       });
     }
@@ -97,23 +108,46 @@ const ChatWindow = () => {
     });
   };
 
+  const scrollToBottom = () => {
+    if (element?.scrollTop !== undefined)
+      element.scrollTop = element?.scrollHeight;
+  };
+
   useEffect(() => {
     getChatData();
     getUserData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [element]);
+
   const handleAddMessages = async () => {
     if (!message) return;
     const chatRef = collection(db, "chats", `${id}`, "messages");
-    const messageDocRef = await addDoc(chatRef, {
+    const messageData = {
       message: message,
-      sender: userEmail,
+      sender: userData?.email,
       timestamp: serverTimestamp(),
-    })
-      .then((res) => setMessage(""))
+    };
+    const messageDocRef = await addDoc(chatRef, { ...messageData })
+      .then((res) => {
+        setMessage("");
+        const chatsRef = doc(db, "chats", `${id}`);
+        setDoc(
+          chatsRef,
+          {
+            lastMessageTimeStamp: messageData.timestamp,
+            lastMessage: messageData.message,
+          },
+          { merge: true }
+        );
+        scrollToBottom();
+      })
       .catch((err) => setError(err.message));
   };
+
   return (
     <div className="h-full flex-[30%] border-r border-gray-700 flex flex-col text-[#e9edef] bg-[#0b141a]">
       {/* error message */}
@@ -122,49 +156,73 @@ const ChatWindow = () => {
       )}
 
       {/* nav */}
-      <div className="bg-[#202c33] h-16 flex justify-between items-center px-5 py-3">
+      <div className="bg-[#202c33] h-16 flex justify-between items-center px-2 md:px-5 py-3">
         <div className="flex justify-between items-center">
+          <div
+            className="mx-2 md:hidden"
+            onClick={() => router.push({ pathname: `/chat` })}
+          >
+            <BackIcon />
+          </div>
           <img
-            className="h-10 rounded-full cursor-pointer"
-            src="https://ui-avatars.com/api/&background=4d148c&color=fff&name=S"
+            className="h-10 w-10 rounded-full cursor-pointer"
+            src={currentContact?.avatar}
             alt="avatar"
           />
-          <p className="ml-3 text-base font-medium">{currentContact?.name}</p>
+          <div className="flex flex-col justify-center">
+            <p className="ml-3 text-base font-medium text-gray-300">
+              {currentContact?.name || ""}
+            </p>
+
+            <p className="ml-3 -mb-2 text-sm text-gray-300 font-normal">
+              {currentContact?.lastSeen || ""}
+            </p>
+          </div>
         </div>
-        <div className="flex text-gray-400">
-          <SearchIcon />
+        <div className="flex text-gray-300">
+          <SearchIcon classes="cursor-not-allowed" />
           <span className="ml-4">
-            <MenuDotIcon />
+            <MenuDotIcon classes="cursor-not-allowed" />
           </span>
         </div>
       </div>
 
       {/* chats */}
-      <div className="relative flex-1">
-        <div className="h-full w-full  z-10 bg-chat-bg bg-contain bg-repeat opacity-5"></div>
-        <div className="absolute w-full top-0  px-20 py-5 flex flex-col space-y-1 overflow-y-auto">
+      <div className="relative flex-1 ">
+        <div className="h-full w-full z-20 bg-chat-bg bg-contain bg-repeat opacity-5"></div>
+        <div
+          id="message-container"
+          className="absolute w-full h-full top-0 px-7 md:px-20 py-5 flex flex-col space-y-1 overflow-y-auto"
+        >
           {messages.map((chat: any, index: number) => (
             <div
               key={index}
-              className={`flex ${
-                chat.sender !== userEmail ? "justify-start" : " justify-end"
+              className={`flex py-1 lg:py-0  ${
+                chat.sender !== userData?.email
+                  ? "justify-start"
+                  : " justify-end"
               } `}
             >
               <div
-                className={`${
-                  chat.sender !== userEmail ? "bg-[#202c33]" : "bg-[#025d4b]"
-                } py-0.5 px-3 rounded-md flex justify-between space-x-3`}
+                className={`relative min-w-[5.5rem] max-w-[16rem] text-gray-300  xl:max-w-xl ${
+                  chat.sender !== userData?.email
+                    ? "bg-[#202c33]"
+                    : "bg-[#025d4b]"
+                } py-0.5 px-3 rounded-md  space-x-3`}
               >
-                <div className="flex justify-center my-1 ">{chat.message}</div>
                 <div
-                  className={`text-xs ${
-                    chat.sender !== userEmail
-                      ? "text-gray-500 flex items-end"
-                      : "flex items-end"
+                  className={`flex justify-start my-1 text-justify mb-4`}
+                  style={{ wordBreak: "break-all" }}
+                >
+                  {chat.message || ""}
+                </div>
+                <p
+                  className={`absolute bottom-0.5 right-1 text-xs ${
+                    chat.sender !== userData?.email ? "text-gray-300 " : ""
                   }`}
                 >
-                  <p>{chat?.timestamp}</p>
-                </div>
+                  {chat?.timestamp || ""}
+                </p>
               </div>
             </div>
           ))}
@@ -172,12 +230,12 @@ const ChatWindow = () => {
       </div>
 
       {/* messaging panel */}
-      <div className="flex justify-between items-center py-2 px-5 bg-[#202c33]">
-        <div className="flex text-gray-400 space-x-5">
-          <EmojiMenuIcon />
-          <ClipMenuIcon />
+      <div className="flex justify-between items-center py-2 px-3 md:px-5 bg-[#202c33]">
+        <div className="hidden text-gray-400 space-x-5 md:flex">
+          <EmojiMenuIcon classes="cursor-not-allowed" />
+          <ClipMenuIcon classes="cursor-not-allowed" />
         </div>
-        <div className="flex-1 px-5">
+        <div className="flex-1 pr-3 md:px-5">
           <input
             className="w-full rounded-md bg-[#2a3942] py-2 px-3 focus:border-none active:border-none outline-none"
             placeholder="Type a message"
