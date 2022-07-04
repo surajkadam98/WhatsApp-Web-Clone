@@ -1,10 +1,10 @@
 ## Getting Started
 
 ## Set up
-1.create firebase account https://firebase.google.com/
-2.create firebase project
-3.create firebase webapp and updated firebaseConfig in utils/firebase.config.ts
-4.create cloud firestore and enable google authentication
+1.create firebase account https://firebase.google.com/ <br/>
+2.create firebase project <br/>
+3.create firebase webapp and updated firebaseConfig in utils/firebase.config.ts <br/>
+4.create cloud firestore and enable google authentication <br/>
 
 Install packages
 
