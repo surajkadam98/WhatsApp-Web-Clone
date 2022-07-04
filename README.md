@@ -1,6 +1,7 @@
-![](/output-images/1.png)
-![](/output-images/2.png)
-![](/output-images/3.png)
+
+<img src="/output-images/1.png" style="width:700px" />
+<img src="/output-images/2.png" style="width:700px" />
+<img src="/output-images/3.png" style="width:350px" />
 
 ## Set up
 
