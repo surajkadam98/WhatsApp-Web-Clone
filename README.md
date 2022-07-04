@@ -1,3 +1,7 @@
+![/output-image/1.png](/output-image/1.png)
+![/output-image/2.png](/output-image/2.png)
+![/output-image/3.png](/output-image/3.png)
+
 ## Set up
 
 1.create firebase account https://firebase.google.com/ <br/>
