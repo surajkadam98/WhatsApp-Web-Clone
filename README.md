@@ -1,4 +1,4 @@
-![](/output-images/1.png | width=300)
+![](/output-images/1.png)
 ![](/output-images/2.png | width=300)
 ![](/output-images/3.png | width=100)
 
