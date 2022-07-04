@@ -1,12 +1,11 @@
-## Getting Started
-
 ## Set up
+
 1.create firebase account https://firebase.google.com/ <br/>
 2.create firebase project <br/>
 3.create firebase webapp and updated firebaseConfig in utils/firebase.config.ts <br/>
 4.create cloud firestore and enable google authentication <br/>
 
-Install packages
+## Install packages
 
 ```
 npm install
@@ -14,7 +13,7 @@ npm install
 yarn
 ```
 
-Run the development server:
+## Run the development server:
 
 ```
 npm run dev

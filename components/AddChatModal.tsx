@@ -8,11 +8,12 @@ import {
 } from "firebase/firestore";
 import React, { useState } from "react";
 import db from "../utils/firebase";
+import { isValidEmail } from "../utils/helper";
 import { CancelIcon } from "../utils/icons";
 import Alert, { IAlert } from "./Alert";
 
 interface IAddChatModal {
-  userEmail?: string;
+  userData?: { [key: string]: string };
   setAddChatModalStatus: (data: boolean) => void;
 }
 
@@ -23,7 +24,7 @@ const defaultAlert: IAlert = {
 };
 
 const AddChatModal = ({
-  userEmail = "",
+  userData = {},
   setAddChatModalStatus = () => null,
 }: IAddChatModal) => {
   const [emailId, setEmailId] = useState("");
@@ -40,9 +41,7 @@ const AddChatModal = ({
       });
 
     //check email is valid
-    const validEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(
-      emailId
-    );
+    const validEmail = isValidEmail(emailId);
     if (!validEmail) {
       setAlert({
         ...alert,
@@ -54,8 +53,8 @@ const AddChatModal = ({
     //check user have account
     const userRef = collection(db, "users");
     const userChats = query(userRef, where("email", "==", `${emailId}`));
-    const contactInfo: any = (await getDocs(userChats)).size;
-    if (!contactInfo) {
+    const contactSnap: any = await getDocs(userChats);
+    if (!contactSnap?.size) {
       setAlert({
         ...alert,
         title: `User account not found!`,
@@ -63,13 +62,32 @@ const AddChatModal = ({
       });
       return;
     }
-
-    const data = [userEmail, emailId];
-    await addDoc(collection(db, "chats"), {
-      users: data,
+    let contactData: any = {};
+    contactSnap.forEach((contact: any) => {
+      let data = contact?.data();
+      contactData = {
+        ...data,
+      };
+    });
+    const usersdata = [userData?.email, emailId];
+    const data = {
+      users: usersdata || [],
+      metaData: [
+        {
+          email: userData?.email || "",
+          displayName: userData?.displayName || "",
+          avatar: userData?.avatar || "",
+        },
+        {
+          email: contactData?.email || "",
+          displayName: contactData?.displayName || "",
+          avatar: contactData?.avatar || "",
+        },
+      ],
       lastMessage: "",
       lastMessageTimestamp: serverTimestamp(),
-    })
+    };
+    await addDoc(collection(db, "chats"), data)
       .then((res) => {
         setAddChatModalStatus(false);
       })
@@ -94,8 +112,8 @@ const AddChatModal = ({
       <div className=" fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
 
       <div className="fixed z-30 inset-0 overflow-y-auto">
-        <div className="flex items-end sm:items-center justify-center min-h-full p-4 text-center sm:p-0 ">
-          <div className="flex flex-col items-stretch bg-[#0b141a] rounded-lg px-3 text-[#e9edef]  text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-md sm:w-full ">
+        <div className="flex items-center sm:items-center justify-center min-h-full p-4 text-center sm:p-0 ">
+          <div className="flex flex-col items-stretch bg-[#0b141a] rounded-lg px-3 text-[#e9edef]  text-left overflow-hidden shadow-xl transform transition-all sm:my-8 w-full sm:max-w-md sm:w-full ">
             {/* heading */}
             <div className="w-full py-2 border-b border-gray-700 flex justify-between items-center">
               <p className="text-lg">Contact Email Address</p>
@@ -141,4 +159,3 @@ const AddChatModal = ({
   );
 };
 export default AddChatModal;
-

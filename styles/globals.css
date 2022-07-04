@@ -9,3 +9,7 @@
 ::-webkit-scrollbar-thumb {
   background: #374044;
 }
+
+*{
+  scroll-behavior: smooth;
+}
