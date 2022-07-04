@@ -20,7 +20,7 @@ import {
   timeSince,
 } from "../utils/helper";
 
-const Sidebar = ({ loggedUser }: any) => {
+const Sidebar = () => {
   const [addChatModalStatus, setAddChatModalStatus] = useState(false);
   const [islogoutPopVisible, setIslogoutPopVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState("");
@@ -92,7 +92,7 @@ const Sidebar = ({ loggedUser }: any) => {
   };
 
   return (
-    <div className="h-full w-full border-r border-gray-700 flex flex-col">
+    <div className="relative h-full w-full border-r border-gray-700 flex flex-col">
       {/* add new chat modal */}
       {addChatModalStatus && (
         <AddChatModal
@@ -141,7 +141,7 @@ const Sidebar = ({ loggedUser }: any) => {
       </div>
 
       {/* add chat button */}
-      <div className="border border-gray-700 w-full p-2">
+      <div className=" hidden sm:flex border border-gray-700 w-full p-2">
         <button
           className="py-2 rounded-md w-full flex justify-center text-[#e9edef] bg-[#35897E] font-normal "
           onClick={() => setAddChatModalStatus(true)}
@@ -192,6 +192,14 @@ const Sidebar = ({ loggedUser }: any) => {
           </div>
         ))}
       </div>
+
+      {/* small device add chat button */}
+      <button
+        className="absolute sm:hidden right-5 shadow-2xl bottom-5 h-16 w-16  rounded-full flex justify-center items-center text-[#e9edef] bg-[#35897E] font-normal "
+        onClick={() => setAddChatModalStatus(true)}
+      >
+        <MessageIcon classes="h-7 w-7" />
+      </button>
     </div>
   );
 };
