@@ -1,6 +1,6 @@
-![/output-image/1.png](/output-image/1.png)
-![/output-image/2.png](/output-image/2.png)
-![/output-image/3.png](/output-image/3.png)
+![/output-images/1.png](/output-images/1.png)
+![/output-images/2.png](/output-images/2.png)
+![/output-images/3.png](/output-images/3.png)
 
 ## Set up
 
